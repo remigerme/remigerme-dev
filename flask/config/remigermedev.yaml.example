@@ -1,0 +1,6 @@
+mysql:
+  database: rge-dev-db
+  user: the_mysql_user
+  password: the_mysql_user_password
+  host: localhost
+  port: 3306

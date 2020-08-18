@@ -1,0 +1,4 @@
+# We don't want to post anything that's in this directory to github
+*
+# But we do want people can see there is a folder
+!.gitignore

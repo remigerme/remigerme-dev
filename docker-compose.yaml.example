@@ -1,0 +1,53 @@
+# This file is an example, it's not the true
+# docker-compose conf used for remigerme.dev.
+
+version: "3.8"
+
+services:
+  flask:
+    build: ./flask
+    container_name: rge-dev-flask
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    command: gunicorn -w 1 -b 0.0.0.0:8000 wsgi:app
+
+  nginx:
+    image: nginx
+    container_name: rge-dev-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - flask
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    environment:
+      MYSQL_DATABASE: "rge-dev-db"
+      MYSQL_ROOT_PASSWORD: "the_root_password"
+      MYSQL_USER: "the_mysql_user"
+      MYSQL_PASSWORD: "the_mysql_user_password"
+    command: /bin/sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
+
+  mysql:
+    image: mysql
+    container_name: rge-dev-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql:/var/lib/mysql
+
+  certbot:
+    image: certbot/certbot
+    restart: unless-stopped
+    container_name: rge-dev-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - nginx
+    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;"
